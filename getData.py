@@ -60,7 +60,7 @@ def displayAndLogEmptyResponse(logFile):
 def getDataAndSavePeriodically(timeInMinutes,saveFile):
 	try:
 		timeInSeconds = timeInMinutes * 60.0
-		threading.Timer(300.0, getDataAndSavePeriodically).start()
+		threading.Timer(timeInSeconds, getDataAndSavePeriodically, args= [timeInMinutes,saveFile]).start()
 		rawData = getRawData()
 		provinceData = getProvinceRows(rawData)
 		votes = getVotes(provinceData)
