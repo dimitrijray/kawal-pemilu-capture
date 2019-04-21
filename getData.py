@@ -5,6 +5,9 @@ import json
 import time
 import threading
 
+def getTimestamp():
+	return time.asctime(time.localtime(time.time()))
+
 def getRawData():
 	request = requests.get('https://kawal-c1.appspot.com/api/c/0')
 	return request.text
@@ -30,24 +33,45 @@ def getPercentage(votes):
 	return (jokowiPercentage,prabowoPercentage)
 
 def displayPercentage(percentage):
-	prettyTimestamp = time.asctime(time.localtime(time.time()))
+	prettyTimestamp = getTimestamp()
 	print("{} | Jokowi/Amin: {:.2f}%; Prabowo/Sandi: {:.2f}%".format(prettyTimestamp,percentage[0],percentage[1]))
 
-def savePercentageData(percentage,filename):
+def writeToFile(content,filename):
 	fileToWrite = open(filename,"a")
-	textToWrite = "{:.0f} 01:{} 02:{}\n".format(time.time(),percentage[0],percentage[1])
-	fileToWrite.write(textToWrite)
+	fileToWrite.write(content)
 	fileToWrite.close()
 
-def getDataAndSavePeriodically():
-	threading.Timer(300.0, getDataAndSavePeriodically).start()
-	rawData = getRawData()
-	provinceData = getProvinceRows(rawData)
-	votes = getVotes(provinceData)
-	percentages = getPercentage(votes)
-	displayPercentage(percentages)
-	savePercentageData(percentages,'data')
+def savePercentageData(percentage,filename):
+	textToWrite = "{:.0f} 01:{} 02:{}\n".format(time.time(),percentage[0],percentage[1])
+	writeToFile(textToWrite,filename)
+
+def displayAndLogConnectionError(logFile):
+	prettyTimeStamp = getTimestamp()
+	print("{} | Connection lost.")
+	textToWrite = "{} Unable to connect to server.".format(prettyTimestamp)
+	writeToFile(textToWrite,logFile)
+
+def displayAndLogEmptyResponse(logFile):
+	prettyTimeStamp = getTimestamp()
+	print("{} | Server returns empty response.")
+	textToWrite = "{} Empty response.".format(prettyTimestamp)
+	writeToFile(textToWrite,logFile)
+
+def getDataAndSavePeriodically(timeInMinutes,saveFile):
+	try:
+		timeInSeconds = timeInMinutes * 60.0
+		threading.Timer(300.0, getDataAndSavePeriodically).start()
+		rawData = getRawData()
+		provinceData = getProvinceRows(rawData)
+		votes = getVotes(provinceData)
+		percentages = getPercentage(votes)
+		displayPercentage(percentages)
+		savePercentageData(percentages,saveFile)
+	except (urllib3.exceptions.NewConnectionError,urllib3.exceptions.MaxRetryError):
+		displayAndLogConnectionError('log')
+	except KeyError:
+		displayAndLogEmptyResponse('log')
 
 if __name__ == "__main__":
-	getDataAndSavePeriodically()
+	getDataAndSavePeriodically(5,'data1')
 
