@@ -67,11 +67,8 @@ def getDataAndSavePeriodically(timeInMinutes,saveFile):
 		percentages = getPercentage(votes)
 		displayPercentage(percentages)
 		savePercentageData(percentages,saveFile)
-	except (urllib3.exceptions.NewConnectionError,urllib3.exceptions.MaxRetryError):
-		displayAndLogConnectionError('log')
-	except KeyError:
+	except:
 		displayAndLogEmptyResponse('log')
 
 if __name__ == "__main__":
-	getDataAndSavePeriodically(5,'data1')
-
+	getDataAndSavePeriodically(10,'data3')
